@@ -10,8 +10,23 @@ import com.example.trooperplay.game.objects.Enemy
 import com.example.trooperplay.game.objects.Player
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import com.example.trooperplay.data.datastore.SettingsDataStore
+import com.example.trooperplay.data.datastore.SettingsPreferences
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
 
-class GameViewModel : ViewModel() {
+class GameViewModel(
+    settingsDataStore: SettingsDataStore
+) : ViewModel(){
+
+    val settings: StateFlow<SettingsPreferences> =
+        settingsDataStore.settingsFlow.stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            SettingsPreferences()
+        )
+
     // 🔹 Inicializar Jugador
     private val player = Player(
         pos = Offset(200f, 600f),

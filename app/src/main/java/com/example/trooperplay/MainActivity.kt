@@ -23,14 +23,3 @@ class MainActivity : ComponentActivity() {
 
     }
 }
-
-@Composable
-fun GameScreen() {
-    GameView()   // <-- AQUÍ VA TU JUEGO DIRECTAMENTE
-}
-
-@Preview
-@Composable
-fun PreviewGame() {
-    GameScreen()
-}

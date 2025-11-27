@@ -14,6 +14,9 @@ import com.example.trooperplay.ui.settings.SettingsScreen
 import com.example.trooperplay.ui.settings.SettingsViewModel
 import com.example.trooperplay.ui.settings.SettingsViewModelFactory
 import com.google.common.base.Defaults.defaultValue
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.trooperplay.ui.game.GameViewModel
+import com.example.trooperplay.ui.game.GameViewModelFactory
 
 @Composable
 fun AppNavGraph(navController: NavHostController) {
@@ -37,9 +40,17 @@ fun AppNavGraph(navController: NavHostController) {
         ) { backStackEntry ->
 
             val name = backStackEntry.arguments?.getString("playerName") ?: ""
+            val context = LocalContext.current
+
+            // 👉 Crear GameViewModel usando factory
+            val gameViewModel: GameViewModel = viewModel(
+                factory = GameViewModelFactory(
+                    SettingsDataStore(context)      // <--- pasa el DataStore aquí
+                ))
 
             GameScreen(
                 playerName = name,
+                viewModel = gameViewModel,
                 onOpenSettings = { navController.navigate(Screen.Settings.route) }
             )
         }
