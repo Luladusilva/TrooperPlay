@@ -2,12 +2,17 @@ package com.example.trooperplay.ui.game
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -18,9 +23,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toIntSize
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.trooperplay.R
+import com.example.trooperplay.ui.settings.SettingsViewModel
 
 @Composable
-fun GameView() {
+fun GameView(playerName: String,
+             onOpenSettings: () -> Unit
+) {
+    Text(text = "Player: $playerName")
 
     val viewModel: GameViewModel = viewModel()
     val state by viewModel.uiState
@@ -31,20 +40,31 @@ fun GameView() {
 
     var showLives by remember { mutableStateOf(false) }
 
-    Column {
+    // Para aplicar los settings:
+    //val settings = settingsViewModel?.uiState?.value
 
-        // -----------------------------
-        //       Encabezado simple
-        // -----------------------------
-        Text("TrooperPlay", modifier = Modifier.padding(16.dp))
+    Box(
+        modifier = Modifier.fillMaxSize()
+    ) {
 
-        Button(onClick = { showLives = !showLives }) {
-            Text(if (showLives) "Ocultar vidas" else "Mostrar vidas")
+        // HUD superior
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(text = "Pilot: $playerName", color = Color.White)
+
+            Button(onClick = onOpenSettings) {
+                Text("⚙ Settings")
+            }
         }
 
-        if (showLives) {
-            Text("Vidas: ❤️".repeat(state.lives))
-        }
+        //if (showLives) {
+          //  Text("Vidas: ❤️".repeat(state.lives))
+
 
         // -----------------------------
         //             CANVAS

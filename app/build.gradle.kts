@@ -75,5 +75,8 @@ dependencies {
     implementation("androidx.compose.material3:material3:1.2.1")
     implementation("androidx.compose.ui:ui-viewbinding:1.5.4")
     implementation("androidx.compose.ui:ui-tooling-preview:1.5.4")
-
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation(platform("androidx.compose:compose-bom:2024.10.00"))
+    implementation("androidx.navigation:navigation-compose")
 }
