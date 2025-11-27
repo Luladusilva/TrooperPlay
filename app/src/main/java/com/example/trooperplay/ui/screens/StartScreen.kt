@@ -41,6 +41,7 @@ fun StartScreen(onStartClick: (String) -> Unit) {
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
+        containerColor = Color.White,
         bottomBar = {
             if (greeting.isNotEmpty()) {
                 Surface(

@@ -19,7 +19,8 @@ import com.example.trooperplay.R
 fun GameView(
     gameState: GameUiState,
     onPlayerTap: (Offset) -> Unit,
-    onFrameUpdate: (Float) -> Unit
+    onFrameUpdate: (Float) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val background = ImageBitmap.imageResource(id = R.drawable.fondo)
     val naveImg = ImageBitmap.imageResource(id = R.drawable.nave)

@@ -51,7 +51,6 @@ class GameViewModel(
     fun updateGameFrame(canvasWidth: Float) {
         // mover suavemente al jugador
         player.moveToward(playerTarget)
-
         controller.update(canvasWidth)
 
         uiState.value = uiState.value.copy(

@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.zIndex
 
 @Composable
 fun GameScreen(
@@ -29,7 +30,8 @@ fun GameScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(16.dp)
+                .zIndex(2f),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -44,7 +46,8 @@ fun GameScreen(
         GameView(
             gameState = state,
             onPlayerTap = viewModel::onPlayerTap,
-            onFrameUpdate = viewModel::updateGameFrame
+            onFrameUpdate = viewModel::updateGameFrame,
+            modifier = Modifier.zIndex(1f)
         )
     }
 }
