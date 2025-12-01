@@ -54,8 +54,11 @@ fun AppNavGraph(navController: NavHostController) {
                 playerName = name,
                 viewModel = gameViewModel,
                 navController = navController,
-                onOpenSettings = { navController.navigate(Screen.Settings.route) }
+                onOpenSettings = { navController.navigate(Screen.Settings.route) },
+                onPause = { navController.navigate(Screen.Pause.route) }
             )
+
+
         }
 
         composable(Screen.Settings.route) {
@@ -96,10 +99,12 @@ fun AppNavGraph(navController: NavHostController) {
                 factory = GameViewModelFactory(SettingsDataStore(context))
             )
 
+            val playerName = gameViewModel.lastPlayerName
+
             GameOverScreen(
                 onRetry = {
                     gameViewModel.restartGame()
-                    navController.navigate(Screen.Game.route) {
+                    navController.navigate(Screen.GameWithName.passName(playerName)) {
                         popUpTo(Screen.GameOver.route) { inclusive = true }
                     }
                 },

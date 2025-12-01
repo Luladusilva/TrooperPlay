@@ -1,26 +1,27 @@
 package com.example.trooperplay.ui.game
 
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import androidx.compose.ui.geometry.Offset
 import androidx.lifecycle.viewModelScope
+import com.example.trooperplay.data.datastore.SettingsDataStore
+import com.example.trooperplay.data.datastore.SettingsPreferences
 import com.example.trooperplay.game.engine.GameController
+import com.example.trooperplay.game.logic.CollisionDetector
 import com.example.trooperplay.game.objects.Bullet
 import com.example.trooperplay.game.objects.Enemy
 import com.example.trooperplay.game.objects.Player
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import com.example.trooperplay.data.datastore.SettingsDataStore
-import com.example.trooperplay.data.datastore.SettingsPreferences
-import com.example.trooperplay.game.logic.CollisionDetector
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.geometry.Offset
 
 class GameViewModel(
     settingsDataStore: SettingsDataStore
 ) : ViewModel() {
 
+    // Settings
     val settings: StateFlow<SettingsPreferences> =
         settingsDataStore.settingsFlow.stateIn(
             viewModelScope,
@@ -28,10 +29,17 @@ class GameViewModel(
             SettingsPreferences()
         )
 
+    // Estado general
+    var uiState = mutableStateOf(GameUiState())
+        private set
+
     var isPaused = mutableStateOf(false)
     var isGameOver = mutableStateOf(false)
 
+    // guardar nombre del usuario jugador
+    var lastPlayerName: String = ""
 
+    // Objetos del juego
     private val player = Player(
         pos = Offset(200f, 600f),
         width = 120f,
@@ -42,22 +50,33 @@ class GameViewModel(
 
     private val controller = GameController(player)
 
-    var uiState = mutableStateOf(GameUiState())
-        private set
-
     init {
         startEnemySpawner()
     }
 
+    // ---------------------------------------------------------
+    // LOOP PRINCIPAL
+    // ---------------------------------------------------------
     fun updateGameFrame(canvasWidth: Float) {
 
-        if (uiState.value.isGameOver) return
+        if (uiState.value.isGameOver || isPaused.value) return
 
+        // mover jugador
         player.moveToward(playerTarget)
 
+        // mover balas, enemigos, colisiones jugador/enemigo y vidas
         controller.update(canvasWidth)
 
-        // 🔹 Colisiones bala - enemigo
+        // Verificar vidas (restar vidas en controller)
+        if (controller.lives <= 0) {
+            uiState.value = uiState.value.copy(isGameOver = true)
+            isGameOver.value = true
+            return
+        }
+
+        // -------------------------------------------------------
+        // Colisiones bala - enemigo y sumar score
+        // -------------------------------------------------------
         val bulletsToRemove = mutableListOf<Bullet>()
         val enemiesToRemove = mutableListOf<Enemy>()
 
@@ -67,7 +86,6 @@ class GameViewModel(
                     bulletsToRemove.add(bullet)
                     enemiesToRemove.add(enemy)
 
-                    // sumar score
                     uiState.value = uiState.value.copy(
                         score = uiState.value.score + 10
                     )
@@ -78,18 +96,9 @@ class GameViewModel(
         controller.bullets.removeAll(bulletsToRemove)
         controller.enemies.removeAll(enemiesToRemove)
 
-        // 🔹 Colisiones jugador - enemigo
-        controller.enemies.forEach { enemy ->
-            if (CollisionDetector.hit(player, enemy)) {
-
-                controller.lives--
-
-                if (controller.lives <= 0) {
-                    uiState.value = uiState.value.copy(isGameOver = true)
-                }
-            }
-        }
-
+        // -------------------------------------------------------
+        // 🔵 Actualizar UI con los datos del juego
+        // -------------------------------------------------------
         uiState.value = uiState.value.copy(
             playerPos = player.pos,
             enemies = controller.enemies.map { it.pos },
@@ -98,6 +107,9 @@ class GameViewModel(
         )
     }
 
+    // ---------------------------------------------------------
+    // 👆 Tap del jugador → mover nave + disparar
+    // ---------------------------------------------------------
     fun onPlayerTap(tapPos: Offset) {
         playerTarget = tapPos
         shoot()
@@ -109,57 +121,57 @@ class GameViewModel(
         )
     }
 
+    // ---------------------------------------------------------
+    // 👾 Spawner de enemigos
+    // ---------------------------------------------------------
     private fun startEnemySpawner() {
         viewModelScope.launch {
-            while (!uiState.value.isGameOver) {
-                delay(1200L)
+            while (true) {
+                if (!uiState.value.isGameOver && !isPaused.value) {
 
-                val spawnY = (200..1500).random().toFloat()
+                    val spawnY = (200..1500).random().toFloat()
 
-                controller.enemies.add(
-                    Enemy(
-                        pos = Offset(1400f, spawnY),
-                        width = 120f,
-                        height = 120f,
-                        speed = (4..8).random().toFloat()
+                    controller.enemies.add(
+                        Enemy(
+                            pos = Offset(1400f, spawnY),
+                            width = 120f,
+                            height = 120f,
+                            speed = (4..8).random().toFloat()
+                        )
                     )
-                )
+                }
+                delay(1200L)
             }
         }
     }
 
-    //Métodos para pausar o reinicar partida
+    // ---------------------------------------------------------
+    // ⏸ Pausa / Resume
+    // ---------------------------------------------------------
     fun pauseGame() { isPaused.value = true }
     fun resumeGame() { isPaused.value = false }
 
-    fun endGame() {
-        isPaused.value = true
-        isGameOver.value = true
-    }
-
+    // ---------------------------------------------------------
+    // 🔄 Reiniciar partida
+    // ---------------------------------------------------------
     fun restartGame() {
         isPaused.value = false
         isGameOver.value = false
 
-        // Reiniciar vidas
         controller.lives = 3
 
-        // Reiniciar score
-        uiState.value = uiState.value.copy(
-            score = 0,
+        uiState.value = GameUiState(
             lives = 3,
-            isGameOver = false
+            score = 0,
+            level = 1,
+            isGameOver = false,
+            playerPos = Offset(200f, 600f)
         )
 
-        // Reiniciar objetos del juego
         controller.enemies.clear()
         controller.bullets.clear()
 
-        // Resetear posición del jugador
         player.pos = Offset(200f, 600f)
-
-        // Reiniciar target
         playerTarget = player.pos
     }
-
 }

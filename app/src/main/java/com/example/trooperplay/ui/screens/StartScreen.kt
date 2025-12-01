@@ -33,12 +33,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.trooperplay.R
 
-
 @Composable
 fun StartScreen(onStartClick: (String) -> Unit) {
-    // Estado para guardar el nombre y el saludo
+
     var name by remember { mutableStateOf("") }
     var greeting by remember { mutableStateOf("") }
+
+    val purple = Color(0xFF6200EE)
+    val lightGray = Color(0xFFF3F0FF)
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -46,100 +48,118 @@ fun StartScreen(onStartClick: (String) -> Unit) {
         bottomBar = {
             if (greeting.isNotEmpty()) {
                 Surface(
-                    color = MaterialTheme.colorScheme.primary,
+                    color = purple,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
                         text = greeting,
                         modifier = Modifier.padding(16.dp),
                         color = Color.White,
-                        fontSize = 18.sp
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Medium
                     )
                 }
             }
         }
     ) { innerPadding ->
+
         Column(
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxSize()
                 .padding(innerPadding)
-                .padding(16.dp),
+                .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            Spacer(modifier = Modifier.height(56.dp))
 
+            // -- TITULO PRINCIPAL --
             Text(
                 text = "TROOPER",
-                fontSize = 38.sp,
-                fontWeight = FontWeight.Bold
+                fontSize = 44.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = purple
             )
-            Spacer(modifier = Modifier.height(120.dp))
+
+            Spacer(modifier = Modifier.height(12.dp))
 
             Text(
                 text = "Welcome space-traveler!",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold
+                fontSize = 26.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.Black
             )
-            Spacer(modifier = Modifier.height(36.dp))
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             Text(
                 text = "R_U ready for the force?",
-                fontSize = 20.sp
+                fontSize = 18.sp,
+                color = Color.DarkGray
             )
-            Spacer(modifier = Modifier.height(56.dp))
+
+            Spacer(modifier = Modifier.height(30.dp))
+
+            // -- IMAGEN CENTRAL --
             Image(
                 painter = painterResource(id = R.drawable.logodarth),
-                contentDescription = "darthVader Image",
-                modifier = Modifier.size(120.dp)
+                contentDescription = "DarthVader Logo",
+                modifier = Modifier.size(110.dp)
             )
-            Spacer(modifier = Modifier.height(56.dp))
 
+            Spacer(modifier = Modifier.height(40.dp))
+
+            // -- TEXTFIELD PERSONALIZADO --
             TextField(
                 value = name,
                 onValueChange = { name = it },
                 label = { Text("Enter your spacial-name") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 10.dp),
-                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(14.dp),
+                textStyle = MaterialTheme.typography.bodyLarge.copy(
+                    color = Color.Black
+                ),
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = Color.White,
-                    unfocusedContainerColor = Color(0xFFF5F5F5),
-                    focusedIndicatorColor = Color(0xFF6200EE),
+                    unfocusedContainerColor = lightGray,
+                    focusedIndicatorColor = purple,
                     unfocusedIndicatorColor = Color.Gray,
-                    cursorColor = Color.Magenta,
-                    focusedLabelColor = Color(0xFF6200EE),
-                    unfocusedLabelColor = Color.DarkGray
+                    cursorColor = purple,
+                    focusedLabelColor = purple,
+                    unfocusedLabelColor = Color.Gray
                 )
-
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(26.dp))
 
+            // -- BOTON PRINCIPAL --
             Button(
                 onClick = {
                     greeting = "Welcome aboard, $name! 🚀"
                     onStartClick(name)
-                          },
-                shape = RoundedCornerShape(16.dp),
-                border = BorderStroke(2.dp, Color.Black),
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(54.dp),
+                shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFEEEEEE),
-                    contentColor = Color.Black,
-                    disabledContainerColor = Color.Gray,
-                    disabledContentColor = Color.DarkGray,
+                    containerColor = purple,
+                    contentColor = Color.White
                 )
             ) {
-                Text("Lift Off!")
+                Text(
+                    "Lift Off!",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
             }
-            Spacer(modifier = Modifier.height(180.dp))
+
+            Spacer(modifier = Modifier.height(40.dp))
 
             Text(
                 text = "Powered by BlackDragon",
-                fontSize = 15.sp,
-                style = MaterialTheme.typography.titleLarge, // 👈 estilo predefinido del tema
-                color = Color.Gray,           // color personalizado
-                fontWeight = FontWeight.Bold,
+                fontSize = 13.sp,
+                color = Color.Gray,
+                fontWeight = FontWeight.Medium
             )
         }
     }
