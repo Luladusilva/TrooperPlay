@@ -12,13 +12,14 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import com.example.trooperplay.data.datastore.SettingsDataStore
 import com.example.trooperplay.data.datastore.SettingsPreferences
+import com.example.trooperplay.game.logic.CollisionDetector
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 
 class GameViewModel(
     settingsDataStore: SettingsDataStore
-) : ViewModel(){
+) : ViewModel() {
 
     val settings: StateFlow<SettingsPreferences> =
         settingsDataStore.settingsFlow.stateIn(
@@ -27,7 +28,10 @@ class GameViewModel(
             SettingsPreferences()
         )
 
-    // 🔹 Inicializar Jugador
+    var isPaused = mutableStateOf(false)
+    var isGameOver = mutableStateOf(false)
+
+
     private val player = Player(
         pos = Offset(200f, 600f),
         width = 120f,
@@ -36,10 +40,8 @@ class GameViewModel(
 
     private var playerTarget: Offset = player.pos
 
-    // 🔹 Controlador del juego
     private val controller = GameController(player)
 
-    // 🔹 Estado visible por la UI
     var uiState = mutableStateOf(GameUiState())
         private set
 
@@ -47,11 +49,46 @@ class GameViewModel(
         startEnemySpawner()
     }
 
-    // 🕹 Actualizar frame
     fun updateGameFrame(canvasWidth: Float) {
-        // mover suavemente al jugador
+
+        if (uiState.value.isGameOver) return
+
         player.moveToward(playerTarget)
+
         controller.update(canvasWidth)
+
+        // 🔹 Colisiones bala - enemigo
+        val bulletsToRemove = mutableListOf<Bullet>()
+        val enemiesToRemove = mutableListOf<Enemy>()
+
+        controller.bullets.forEach { bullet ->
+            controller.enemies.forEach { enemy ->
+                if (CollisionDetector.hit(bullet, enemy)) {
+                    bulletsToRemove.add(bullet)
+                    enemiesToRemove.add(enemy)
+
+                    // sumar score
+                    uiState.value = uiState.value.copy(
+                        score = uiState.value.score + 10
+                    )
+                }
+            }
+        }
+
+        controller.bullets.removeAll(bulletsToRemove)
+        controller.enemies.removeAll(enemiesToRemove)
+
+        // 🔹 Colisiones jugador - enemigo
+        controller.enemies.forEach { enemy ->
+            if (CollisionDetector.hit(player, enemy)) {
+
+                controller.lives--
+
+                if (controller.lives <= 0) {
+                    uiState.value = uiState.value.copy(isGameOver = true)
+                }
+            }
+        }
 
         uiState.value = uiState.value.copy(
             playerPos = player.pos,
@@ -61,26 +98,20 @@ class GameViewModel(
         )
     }
 
-
-    // 👆 Movimiento del jugador al tocar
     fun onPlayerTap(tapPos: Offset) {
         playerTarget = tapPos
         shoot()
     }
 
-
-
-    // 🔫 Disparar
     private fun shoot() {
         controller.bullets.add(
             Bullet(Offset(player.pos.x + player.width / 2, player.pos.y))
         )
     }
 
-    // 👾 Spawner de enemigos
     private fun startEnemySpawner() {
         viewModelScope.launch {
-            while (true) {
+            while (!uiState.value.isGameOver) {
                 delay(1200L)
 
                 val spawnY = (200..1500).random().toFloat()
@@ -97,5 +128,38 @@ class GameViewModel(
         }
     }
 
+    //Métodos para pausar o reinicar partida
+    fun pauseGame() { isPaused.value = true }
+    fun resumeGame() { isPaused.value = false }
+
+    fun endGame() {
+        isPaused.value = true
+        isGameOver.value = true
+    }
+
+    fun restartGame() {
+        isPaused.value = false
+        isGameOver.value = false
+
+        // Reiniciar vidas
+        controller.lives = 3
+
+        // Reiniciar score
+        uiState.value = uiState.value.copy(
+            score = 0,
+            lives = 3,
+            isGameOver = false
+        )
+
+        // Reiniciar objetos del juego
+        controller.enemies.clear()
+        controller.bullets.clear()
+
+        // Resetear posición del jugador
+        player.pos = Offset(200f, 600f)
+
+        // Reiniciar target
+        playerTarget = player.pos
+    }
 
 }

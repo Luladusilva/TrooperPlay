@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.trooperplay.R
 
+
 @Composable
 fun StartScreen(onStartClick: (String) -> Unit) {
     // Estado para guardar el nombre y el saludo

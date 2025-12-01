@@ -17,6 +17,8 @@ import com.google.common.base.Defaults.defaultValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.trooperplay.ui.game.GameViewModel
 import com.example.trooperplay.ui.game.GameViewModelFactory
+import com.example.trooperplay.ui.screens.GameOverScreen
+import com.example.trooperplay.ui.screens.PauseScreen
 
 @Composable
 fun AppNavGraph(navController: NavHostController) {
@@ -51,6 +53,7 @@ fun AppNavGraph(navController: NavHostController) {
             GameScreen(
                 playerName = name,
                 viewModel = gameViewModel,
+                navController = navController,
                 onOpenSettings = { navController.navigate(Screen.Settings.route) }
             )
         }
@@ -69,6 +72,42 @@ fun AppNavGraph(navController: NavHostController) {
                 onBack = { navController.popBackStack() }
             )
         }
+
+        composable(Screen.Pause.route) { backStackEntry ->
+            val context = LocalContext.current
+
+            val gameViewModel: GameViewModel = viewModel(
+                backStackEntry,
+                factory = GameViewModelFactory(SettingsDataStore(context))
+            )
+
+            PauseScreen(
+                onResume = { navController.popBackStack() },
+                onExit = { navController.navigate(Screen.Start.route) }
+            )
+        }
+
+
+        composable(Screen.GameOver.route) { backStackEntry ->
+            val context = LocalContext.current
+
+            val gameViewModel: GameViewModel = viewModel(
+                backStackEntry,
+                factory = GameViewModelFactory(SettingsDataStore(context))
+            )
+
+            GameOverScreen(
+                onRetry = {
+                    gameViewModel.restartGame()
+                    navController.navigate(Screen.Game.route) {
+                        popUpTo(Screen.GameOver.route) { inclusive = true }
+                    }
+                },
+                onExit = { navController.navigate(Screen.Start.route) }
+            )
+        }
+
+
 
     }
 }

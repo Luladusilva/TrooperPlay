@@ -7,12 +7,27 @@ import com.example.trooperplay.game.objects.Enemy
 
 object CollisionDetector {
 
-    fun hit(a: Collidable, b: Collidable): Boolean {
-        return RectF.intersects(a.getRect(), b.getRect())
+    private fun distance(a: Collidable, b: Collidable): Float {
+        val dx = a.centerX - b.centerX
+        val dy = a.centerY - b.centerY
+        return kotlin.math.sqrt(dx*dx + dy*dy)
     }
 
-    // Redundante, pero útil para personalizar la colisión bala–enemigo
-    fun hit(bullet: Bullet, enemy: Enemy): Boolean {
-        return RectF.intersects(bullet.getRect(), enemy.getRect())
+    fun hit(a: Collidable, b: Collidable): Boolean {
+
+        // 1. Fast check (rect)
+        if (!RectF.intersects(a.getRect(), b.getRect())) {
+            return false
+        }
+
+        // 2. Precise check (circle)
+        val dist = distance(a, b)
+        return dist < (a.hitRadius + b.hitRadius)
     }
+
+    fun hit(bullet: Bullet, enemy: Enemy): Boolean = hit(
+        a = bullet,
+        b = enemy
+    )
 }
+
