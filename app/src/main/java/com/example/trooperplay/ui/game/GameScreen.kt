@@ -22,11 +22,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.zIndex
 import androidx.navigation.NavController
+import com.example.trooperplay.domain.model.StarWarsCharacter
 import com.example.trooperplay.ui.navigation.AppNavGraph
 
 @Composable
 fun GameScreen(
     playerName: String,
+    characterName: String,
     viewModel: GameViewModel,
     navController: NavController,
     onOpenSettings: () -> Unit,

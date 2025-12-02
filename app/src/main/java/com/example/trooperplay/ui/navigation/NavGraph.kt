@@ -7,18 +7,19 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import androidx.navigation.NavType
 import com.example.trooperplay.data.datastore.SettingsDataStore
 import com.example.trooperplay.ui.screens.StartScreen
 import com.example.trooperplay.ui.game.GameScreen
 import com.example.trooperplay.ui.settings.SettingsScreen
 import com.example.trooperplay.ui.settings.SettingsViewModel
 import com.example.trooperplay.ui.settings.SettingsViewModelFactory
-import com.google.common.base.Defaults.defaultValue
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.trooperplay.ui.game.GameViewModel
 import com.example.trooperplay.ui.game.GameViewModelFactory
 import com.example.trooperplay.ui.screens.GameOverScreen
 import com.example.trooperplay.ui.screens.PauseScreen
+import com.example.trooperplay.ui.screens.custom.CustomScreen
+import com.example.trooperplay.ui.screens.custom.selectableCharacters
 
 @Composable
 fun AppNavGraph(navController: NavHostController) {
@@ -28,91 +29,87 @@ fun AppNavGraph(navController: NavHostController) {
         startDestination = Screen.Start.route
     ) {
 
+        // START -> go to CUSTOM (pass playerName)
         composable(Screen.Start.route) {
             StartScreen(
                 onStartClick = { name ->
-                    navController.navigate(Screen.GameWithName.passName(name))
+                    navController.navigate(Screen.Custom.route(name))
                 }
             )
         }
 
+        // CUSTOM screen: receives playerName via path
+        composable(
+            route = Screen.Custom.route,
+            arguments = listOf(
+                navArgument("playerName") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val playerName = backStackEntry.arguments?.getString("playerName") ?: ""
+
+            // pass the list of selectable characters (local factory) and the playerName
+            CustomScreen(
+                playerName = playerName,
+                characters = selectableCharacters,
+                onCharacterSelected = { character ->
+                    // navigate to GAME with both params
+                    navController.navigate(
+                        Screen.GameWithName.route(playerName, character.name)
+                    )
+                }
+            )
+        }
+
+        // GAME screen: receives playerName and characterName via path
         composable(
             route = Screen.GameWithName.route,
-            arguments = listOf(navArgument("playerName") { defaultValue = "" })
+            arguments = listOf(
+                navArgument("playerName") { type = NavType.StringType },
+                navArgument("characterName") { type = NavType.StringType }
+            )
         ) { backStackEntry ->
-
-            val name = backStackEntry.arguments?.getString("playerName") ?: ""
+            val playerName = backStackEntry.arguments?.getString("playerName") ?: ""
+            val characterName = backStackEntry.arguments?.getString("characterName") ?: ""
             val context = LocalContext.current
 
-            // 👉 Crear GameViewModel usando factory
             val gameViewModel: GameViewModel = viewModel(
-                factory = GameViewModelFactory(
-                    SettingsDataStore(context)      // <--- pasa el DataStore aquí
-                ))
+                factory = GameViewModelFactory(SettingsDataStore(context))
+            )
 
             GameScreen(
-                playerName = name,
+                playerName = playerName,
+                characterName = characterName,
                 viewModel = gameViewModel,
                 navController = navController,
                 onOpenSettings = { navController.navigate(Screen.Settings.route) },
                 onPause = { navController.navigate(Screen.Pause.route) }
             )
-
-
         }
 
+        // SETTINGS
         composable(Screen.Settings.route) {
             val context = LocalContext.current
-
             val vm: SettingsViewModel = viewModel(
-                factory = SettingsViewModelFactory(
-                    SettingsDataStore(context)
-                )
+                factory = SettingsViewModelFactory(SettingsDataStore(context))
             )
-
-            SettingsScreen(
-                viewModel = vm,
-                onBack = { navController.popBackStack() }
-            )
+            SettingsScreen(viewModel = vm, onBack = { navController.popBackStack() })
         }
 
-        composable(Screen.Pause.route) { backStackEntry ->
-            val context = LocalContext.current
-
-            val gameViewModel: GameViewModel = viewModel(
-                backStackEntry,
-                factory = GameViewModelFactory(SettingsDataStore(context))
-            )
-
-            PauseScreen(
-                onResume = { navController.popBackStack() },
-                onExit = { navController.navigate(Screen.Start.route) }
-            )
+        // PAUSE
+        composable(Screen.Pause.route) {
+            PauseScreen(onResume = { navController.popBackStack() }, onExit = {
+                navController.navigate(Screen.Start.route) {
+                    popUpTo(Screen.Start.route) { inclusive = true }
+                }
+            })
         }
 
-
-        composable(Screen.GameOver.route) { backStackEntry ->
-            val context = LocalContext.current
-
-            val gameViewModel: GameViewModel = viewModel(
-                backStackEntry,
-                factory = GameViewModelFactory(SettingsDataStore(context))
-            )
-
-            val playerName = gameViewModel.lastPlayerName
-
+        // GAME OVER
+        composable(Screen.GameOver.route) {
             GameOverScreen(
-                onRetry = {
-                    gameViewModel.restartGame()
-                    navController.navigate(Screen.GameWithName.passName(playerName)) {
-                        popUpTo(Screen.GameOver.route) { inclusive = true }
-                    }
-                },
+                onRetry = { navController.popBackStack() },
                 onExit = { navController.navigate(Screen.Start.route) }
             )
         }
-
-
-
     }
 }
